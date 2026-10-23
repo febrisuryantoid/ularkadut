@@ -1,0 +1,6 @@
+{
+  "name": "Ular Kadut - 2D Arcade Snake Game",
+  "description": "Game arcade 2D Ular Kadut dengan mekanik khas tubuh terpotong saat menabrak diri sendiri dan tabrakan dinding Game Over.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
