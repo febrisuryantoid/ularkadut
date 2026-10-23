@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useGameEngine } from './hooks/useGameEngine';
+import { usePWAInstall } from './hooks/usePWAInstall';
 import { getUnclaimedRewardCount } from './game/economyManager';
 import { soundManager } from './utils/audio';
 import { setupAutoFullscreenForPWA } from './utils/fullscreen';
@@ -15,6 +16,7 @@ import { SkinShopModal } from './components/SkinShopModal';
 import { RewardsHubModal } from './components/RewardsHubModal';
 import { HowToPlayModal } from './components/HowToPlayModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { PWAInstallWidget } from './components/PWAInstallWidget';
 import { DifficultyLevel } from './game/gameTypes';
 
 const DIFFICULTY_BACKGROUNDS: Record<
@@ -68,6 +70,8 @@ export default function App() {
     goToMenu,
   } = useGameEngine();
 
+  const pwaInstall = usePWAInstall();
+
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isSkinShopOpen, setIsSkinShopOpen] = useState(false);
   const [isRewardsOpen, setIsRewardsOpen] = useState(false);
@@ -117,6 +121,9 @@ export default function App() {
   const isPlaying = engineState.state === 'playing';
   const isGameOver = engineState.state === 'gameover';
   const isLevelComplete = engineState.state === 'levelcomplete';
+
+  const isAnyModalOpen = isHelpOpen || isSkinShopOpen || isRewardsOpen;
+  const isPWAWidgetVisible = pwaInstall.shouldShowWidget && isMenu && !isAnyModalOpen;
 
   const unclaimedRewardsCount = getUnclaimedRewardCount(economy, nowMs);
 
@@ -217,10 +224,14 @@ export default function App() {
 
       {/* 2. UNIFIED RESPONSIVE ARENA (Full-Width Overlay in Menu, Balanced Controls in Gameplay) */}
       <div
-        className={`flex-1 min-h-0 w-full relative z-10 flex ${
+        className={`flex-1 min-h-0 w-full relative z-10 flex transition-[padding] duration-200 ${
           isLandscapeLayout
-            ? 'flex-row items-center justify-between px-2 sm:px-4 xl:px-6 py-1 gap-2 sm:gap-3 max-w-[1600px] mx-auto'
-            : 'flex-col justify-between px-1.5 sm:px-3 pt-0.5 pb-1'
+            ? `flex-row items-center justify-between px-2 sm:px-4 xl:px-6 pt-1 ${
+                isPWAWidgetVisible && !isCompactLandscape ? 'pb-[118px]' : 'pb-1'
+              } gap-2 sm:gap-3 max-w-[1600px] mx-auto`
+            : `flex-col justify-between px-1.5 sm:px-3 pt-0.5 ${
+                isPWAWidgetVisible ? 'pb-[114px]' : 'pb-1'
+              }`
         }`}
       >
         {/* Left Side Control in Landscape Mode (Shown during gameplay/pause/gameover) */}
@@ -357,6 +368,18 @@ export default function App() {
       />
 
       <HowToPlayModal isOpen={isHelpOpen} onClose={handleCloseHelp} />
+
+      {/* 4. Smart PWA Install Prompt Widget (Desktop Floating Bottom-Right / Mobile Compact Card) */}
+      <PWAInstallWidget
+        visible={isPWAWidgetVisible}
+        isPrompting={pwaInstall.isPrompting}
+        showManualInstructions={pwaInstall.showManualInstructions}
+        platform={pwaInstall.platform}
+        browser={pwaInstall.browser}
+        onInstallNow={pwaInstall.handleInstallNow}
+        onDismiss={pwaInstall.handleDismiss}
+        onBackFromInstructions={pwaInstall.handleBackFromInstructions}
+      />
     </div>
   );
 }
